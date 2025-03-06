@@ -402,3 +402,48 @@ func TestFormatPath(t *testing.T) {
 		runTests(t, tests)
 	})
 }
+
+func TestIsSymlink(t *testing.T) {
+	type testCase struct {
+		name     string
+		path     string
+		expected bool
+	}
+
+	tmpName := os.TempDir() + "tmp"
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Error getting current directory for testing: %v", err)
+	}
+
+	err = os.Symlink(cwd, tmpName)
+	if err != nil {
+		t.Fatalf("Error creating symlink to cwd for testing: %v", err)
+	}
+
+	testCases := []testCase{
+		{
+			name:     "Symlink to current directory",
+			path:     tmpName,
+			expected: true,
+		},
+		{
+			name:     "Absolute path to current directory",
+			path:     cwd,
+			expected: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(*testing.T) {
+			ok, err := isSymlink(testCase.path)
+			if err != nil {
+				t.Errorf("isSymlink(%s): isSymlink returned an error: %v", testCase.path, err)
+			}
+
+			if ok != testCase.expected {
+				t.Errorf("isSymlink(%s): Expected %t, got %t", testCase.path, testCase.expected, ok)
+			}
+		})
+	}
+}
