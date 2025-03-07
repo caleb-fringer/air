@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -410,13 +411,17 @@ func TestIsSymlink(t *testing.T) {
 		expected bool
 	}
 
-	tmpName := os.TempDir() + "tmp"
-	cwd, err := os.Getwd()
+	tmp := path.Join("_testdata/tmp")
+	_, err := os.Create(tmp)
+	defer os.Remove(tmp)
+
 	if err != nil {
-		t.Fatalf("Error getting current directory for testing: %v", err)
+		t.Fatalf("Error creating temporary file for testing: %v", err)
 	}
 
-	err = os.Symlink(cwd, tmpName)
+	tmpTarget := path.Join("_testdata/tmp.link")
+	err = os.Symlink(tmp, tmpTarget)
+	defer os.Remove(tmpTarget)
 	if err != nil {
 		t.Fatalf("Error creating symlink to cwd for testing: %v", err)
 	}
@@ -424,12 +429,12 @@ func TestIsSymlink(t *testing.T) {
 	testCases := []testCase{
 		{
 			name:     "Symlink to current directory",
-			path:     tmpName,
+			path:     tmpTarget,
 			expected: true,
 		},
 		{
 			name:     "Absolute path to current directory",
-			path:     cwd,
+			path:     tmp,
 			expected: false,
 		},
 	}
